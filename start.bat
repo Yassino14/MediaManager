@@ -36,7 +36,7 @@ if not exist "backend\.venv\Scripts\python.exe" (
 
 :: 3. Install or update backend requirements if necessary
 if not exist "backend\.venv\.deps_installed" (
-    echo [SETUP] Installing backend dependencies (FastAPI, Uvicorn, yt-dlp, Pydantic)...
+    echo [SETUP] Installing backend dependencies [FastAPI, Uvicorn, yt-dlp, Pydantic]...
     "backend\.venv\Scripts\python.exe" -m pip install --upgrade pip
     "backend\.venv\Scripts\python.exe" -m pip install -r "backend\requirements.txt"
     if !errorlevel! neq 0 (
@@ -59,7 +59,7 @@ if %errorlevel% neq 0 (
 )
 
 if not exist "frontend\node_modules" (
-    echo [SETUP] Installing frontend dependencies (React, TypeScript, Vite, Tailwind)...
+    echo [SETUP] Installing frontend dependencies [React, TypeScript, Vite, Tailwind]...
     pushd "frontend"
     call npm install
     if !errorlevel! neq 0 (
@@ -83,13 +83,23 @@ if %errorlevel% neq 0 (
     echo [OK] FFmpeg detected on system PATH.
 )
 
-:: 6. Start Backend (127.0.0.1:8000) and Frontend (127.0.0.1:5173)
+:: 6. Start Backend (127.0.0.1:8000) and Frontend (127.0.0.1:5173) if not already running
 echo.
-echo [LAUNCH] Starting FastAPI Backend on http://127.0.0.1:8000 ...
-start "UMT Backend (FastAPI)" /D "%~dp0backend" cmd /k ".venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+netstat -ano | findstr /R /C:":8000 .*LISTENING" >nul 2>nul
+if !errorlevel! neq 0 (
+    echo [LAUNCH] Starting FastAPI Backend on http://127.0.0.1:8000 ...
+    start "UMT Backend - FastAPI" /D "%~dp0backend" cmd /k ".venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+) else (
+    echo [OK] FastAPI Backend is already running on port 8000.
+)
 
-echo [LAUNCH] Starting Vite React Frontend on http://127.0.0.1:5173 ...
-start "UMT Frontend (Vite)" /D "%~dp0frontend" cmd /k "npm run dev"
+netstat -ano | findstr /R /C:":5173 .*LISTENING" >nul 2>nul
+if !errorlevel! neq 0 (
+    echo [LAUNCH] Starting Vite React Frontend on http://127.0.0.1:5173 ...
+    start "UMT Frontend - Vite" /D "%~dp0frontend" cmd /k "npm run dev"
+) else (
+    echo [OK] Vite Frontend is already running on port 5173.
+)
 
 :: 7. Wait until servers are ready, then open local web application in default browser
 echo [WAIT] Waiting for backend and frontend servers to become ready...
